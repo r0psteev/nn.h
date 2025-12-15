@@ -11,7 +11,7 @@
 // header file behavior goes here
 
 #include <stddef.h> // for size_t
-#include <assert.h>
+#include <stdio.h>
 
 // with stb-style we can customize our definition of malloc function
 // so as to decouple it from libc.
@@ -27,7 +27,7 @@
 #ifndef NN_ASSERT
 #include <assert.h>
 #define NN_ASSERT assert
-#endif
+#endif //NN_ASSERT
 
 typedef struct {
     // fields rows, and cols help us workout the structure of matrix
@@ -37,6 +37,13 @@ typedef struct {
     float *es; // start of contiguous array.
 } Mat;
 
+// each ith row is (m).cols in length.
+// we wrapp m, i, j in brackets to prevent in-place
+// replacement of expressions in the macro which could
+// alter BODMASS order.
+#define  MAT_AT(m, i, j) (m).es[(i)*(m).cols + (j)]
+
+float rand_float(void);
 Mat mat_alloc(size_t rows, size_t cols);
 // Author wants to concentrate all memory allocations in a single
 // place `mat_alloc`.
@@ -44,11 +51,18 @@ Mat mat_alloc(size_t rows, size_t cols);
 // and then pass them to the other functions which will manipulate them.
 void mat_dot(Mat dst, Mat a, Mat b);
 void mat_sum(Mat dst, Mat a);
+void mat_print(Mat a);
+void mat_rand(Mat m, float low, float high);
 
 #endif // NN_H_
 
 #ifdef NN_IMPLEMENTATION
 // implementations go here
+
+float rand_float(void) {
+    // returns a random number from 0 to 1.
+    return (float) rand() / (float) RAND_MAX;
+}
 
 Mat mat_alloc(size_t rows, size_t cols) {
     Mat m;
@@ -59,7 +73,7 @@ Mat mat_alloc(size_t rows, size_t cols) {
     // but in case we change es to double type, it will automatically
     // become double here too.
     m.es = NN_MALLOC(sizeof(*m.es)*rows*cols);
-    assert(m.es != NULL);
+    NN_ASSERT(m.es != NULL);
     return m;
 }
 
@@ -72,7 +86,31 @@ void mat_dot(Mat dst, Mat a, Mat b) {
     (void) b;
 }
 void mat_sum(Mat dst, Mat a) {
-    (void) dst;
-    (void) a;
+    NN_ASSERT(dst.rows == a.rows);
+    NN_ASSERT(dst.cols == a.rows);
+    for (size_t i=0; i<dst.rows; i++) {
+        for (size_t j=0; j<dst.cols; j++) {
+            MAT_AT(dst, i, j) = MAT_AT(a, i, j);
+        }
+    }
+}
+
+void mat_print(Mat m) {
+    for (size_t i = 0; i < m.rows; i++) {
+        for (size_t j = 0; j < m.cols; j++) {
+            printf("%f ", MAT_AT(m, i, j));
+        }
+        printf("\n");
+    }
+}
+
+// low are high is the range for the random numbers that will
+// the matrix to be in.
+void mat_rand(Mat m, float low, float high) {
+    for (size_t i=0; i < m.rows; i++) {
+        for (size_t j=0; j<m.cols; j++) {
+            MAT_AT(m, i, j) = rand_float() * (high - low) + low;
+        }
+    }
 }
 #endif // NN_IMPLEMENTATION
