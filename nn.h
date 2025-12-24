@@ -89,6 +89,7 @@ void mat_dot(Mat dst, Mat a, Mat b) {
 
     for (size_t i=0; i<dst.rows; i++) {
         for (size_t j=0; j<dst.cols; j++) {
+            MAT_AT(dst, i, j) = 0;
             for (size_t k=0; k<n; k++) {
                 MAT_AT(dst, i, j) += MAT_AT(a, i, k) * MAT_AT(b, k, j);
             }

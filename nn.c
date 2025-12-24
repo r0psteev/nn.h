@@ -6,16 +6,25 @@
 
 int main(void) {
     srand(time(NULL));
-    Mat a = mat_alloc(2, 2);
-    mat_fill(a, 3);
 
-    Mat b = mat_alloc(2, 2);
-    mat_fill(b, 1);
+    Mat a = mat_alloc(1, 2);
+    mat_rand(a, 5, 10);
 
-    printf("---------------------\n");
+    float id_data[4] = {
+        1, 0,
+        0, 1,
+    };
+
+    Mat b = { .rows = 2, .cols = 2, .es = id_data };
+
+    Mat dst = mat_alloc(1, 2);
+    
+    mat_dot(dst, a, b);
     mat_print(a);
-    mat_sum(a, b);
-    printf("---------------------\n");
-    mat_print(a);
+    printf("------------\n");
+    mat_print(b);
+    printf("------------\n");
+    mat_print(dst);
+
     return 0;
 }
