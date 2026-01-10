@@ -73,7 +73,7 @@ float rand_float(void) {
 }
 
 float sigmoidf(float x) {
-    return 1.f / (1.f + exp(-x));
+    return 1.f / (1.f + expf(-x));
 }
 
 Mat mat_alloc(size_t rows, size_t cols) {
@@ -109,7 +109,7 @@ void mat_dot(Mat dst, Mat a, Mat b) {
 }
 void mat_sum(Mat dst, Mat a) {
     NN_ASSERT(dst.rows == a.rows);
-    NN_ASSERT(dst.cols == a.rows);
+    NN_ASSERT(dst.cols == a.cols);
     for (size_t i=0; i<dst.rows; i++) {
         for (size_t j=0; j<dst.cols; j++) {
             MAT_AT(dst, i, j) += MAT_AT(a, i, j);

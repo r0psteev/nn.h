@@ -15,10 +15,12 @@ float forward_xor(Xor m, float x1, float x2) {
     
     mat_dot(m.a1, m.a0, m.w1);
     mat_sum(m.a1, m.b1);
+    //MAT_PRINT(m.a1);
     mat_sig(m.a1);
 
     mat_dot(m.a2, m.a1, m.w2);
     mat_sum(m.a2, m.b2);
+    //MAT_PRINT(m.a2);
     mat_sig(m.a2);
 
     return *m.a2.es;
@@ -39,10 +41,16 @@ int main(void) {
 
     // we don't need to randomize the activation layers,
     // as they are results of computations.
-    mat_rand(m.w1, 5, 10);
-    mat_rand(m.b1, 5, 10);
-    mat_rand(m.w2, 5, 10);
-    mat_rand(m.b2, 5, 10);
+    mat_rand(m.w1, 0, 1);
+    mat_rand(m.b1, 0, 1);
+    mat_rand(m.w2, 0, 1);
+    mat_rand(m.b2, 0, 1);
+
+    for (size_t i=0; i<2; i++) {
+        for (size_t j=0; j<2; j++) {
+            printf("%zu ^ %zu = %f\n", i, j, forward_xor(m, i, j));
+        }
+    }
 
     return 0;
 }
