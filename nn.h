@@ -44,6 +44,8 @@ typedef struct {
 #define  MAT_AT(m, i, j) (m).es[(i)*(m).cols + (j)]
 
 float rand_float(void);
+float sigmoidf(float);
+
 Mat mat_alloc(size_t rows, size_t cols);
 // Author wants to concentrate all memory allocations in a single
 // place `mat_alloc`.
@@ -54,6 +56,7 @@ void mat_sum(Mat dst, Mat a);
 void mat_print(Mat a, const char* name);
 void mat_rand(Mat m, float low, float high);
 void mat_fill(Mat m, float num);
+void mat_sig(Mat m);
 // the #m stringifies the token m, it converts the variable name m into a
 // a string.
 #define MAT_PRINT(m) mat_print(m, #m);
@@ -66,6 +69,10 @@ void mat_fill(Mat m, float num);
 float rand_float(void) {
     // returns a random number from 0 to 1.
     return (float) rand() / (float) RAND_MAX;
+}
+
+float sigmoidf(float x) {
+    return 1.f / (1.f + exp(-x));
 }
 
 Mat mat_alloc(size_t rows, size_t cols) {
@@ -134,6 +141,16 @@ void mat_fill(Mat m, float num) {
     for (size_t i=0; i < m.rows; i++) {
         for (size_t j=0; j<m.cols; j++) {
             MAT_AT(m, i, j) = num;
+        }
+    }
+}
+
+// Goes through all the elements of the matrix and
+// applies sigmoid on them.
+void mat_sig(Mat m) {
+    for (size_t i=0; i < m.rows; i++) {
+        for (size_t j=0; j<m.cols; j++) {
+            MAT_AT(m, i, j) = sigmoidf(MAT_AT(m, i, j));
         }
     }
 }
