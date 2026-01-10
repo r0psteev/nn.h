@@ -12,6 +12,7 @@
 
 #include <stddef.h> // for size_t
 #include <stdio.h>
+#include <math.h>
 
 // with stb-style we can customize our definition of malloc function
 // so as to decouple it from libc.
