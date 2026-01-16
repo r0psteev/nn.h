@@ -35,6 +35,7 @@ typedef struct {
     // represented by the underlying contiguous array.
     size_t rows;
     size_t cols;
+    size_t stride;
     float *es; // start of contiguous array.
 } Mat;
 
@@ -42,7 +43,7 @@ typedef struct {
 // we wrapp m, i, j in brackets to prevent in-place
 // replacement of expressions in the macro which could
 // alter BODMASS order.
-#define  MAT_AT(m, i, j) (m).es[(i)*(m).cols + (j)]
+#define  MAT_AT(m, i, j) (m).es[(i)*(m).stride + (j)]
 
 float rand_float(void);
 float sigmoidf(float);
@@ -58,6 +59,8 @@ void mat_print(Mat a, const char* name);
 void mat_rand(Mat m, float low, float high);
 void mat_fill(Mat m, float num);
 void mat_sig(Mat m);
+Mat mat_row(Mat m, size_t row);
+void mat_copy(Mat dst, Mat src);
 // the #m stringifies the token m, it converts the variable name m into a
 // a string.
 #define MAT_PRINT(m) mat_print(m, #m);
@@ -80,6 +83,7 @@ Mat mat_alloc(size_t rows, size_t cols) {
     Mat m;
     m.rows = rows;
     m.cols = cols;
+    m.stride = cols;
     // sizeof(*m.es) means size of the first element of m.es
     // which is float in this  case.
     // but in case we change es to double type, it will automatically
@@ -155,4 +159,28 @@ void mat_sig(Mat m) {
         }
     }
 }
+
+Mat mat_row(Mat m, size_t row) {
+    return (Mat){
+        .rows = 1,
+        .cols = m.cols,
+        .stride = m.stride,
+        // since MAT_AT is an expression that points to an element with es array,
+        // using ampersand infront of it gives us a pointer from the element pointed,
+        // in this case it is the first element in the row.
+        // Thus a pointer to the first element in the row.
+        .es = &MAT_AT(m, row, 0),
+    };
+}
+
+void mat_copy(Mat dst, Mat src) {
+    NN_ASSERT(dst.rows == src.rows);
+    NN_ASSERT(dst.cols == src.cols);
+    for (size_t i=0; i<dst.rows; i++){
+        for (size_t j=0; j<dst.cols; j++) {
+            MAT_AT(dst, i, j) = MAT_AT(src, i, j);
+        }
+    }
+}
 #endif // NN_IMPLEMENTATION
+
