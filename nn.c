@@ -9,6 +9,18 @@ typedef struct {
     Mat w2, b2, a2; // 2nd layer
 } Xor;
 
+Xor xor_alloc(void) {
+    Xor m;
+    m.a0 = mat_alloc(1, 2);
+    m.w1 = mat_alloc(2, 2);
+    m.b1 = mat_alloc(1, 2); // bias matrix is 1x2;
+    m.a1 = mat_alloc(1, 2);
+    m.w2 = mat_alloc(2, 1);
+    m.b2 = mat_alloc(1, 1);
+    m.a2 = mat_alloc(1, 1);
+    return m;
+}
+
 float forward_xor(Xor m) {
     mat_dot(m.a1, m.a0, m.w1); // multiplication
     mat_sum(m.a1, m.b1); // bias
@@ -52,6 +64,77 @@ float cost(Xor m, Mat ti, Mat to) {
     return c/n;
 }
 
+// Xor g ( g means gradient)
+void finite_diff(Xor m, Xor g, float eps, Mat ti, Mat to) {
+    float saved;
+
+    float c = cost(m, ti, to);
+
+    // altering the weights matrix of the first layer
+    for (size_t i=0; i<m.w1.rows; i++) {
+        for (size_t j=0; j<m.w1.cols; j++) {
+            saved = MAT_AT(m.w1, i, j);
+            MAT_AT(m.w1, i, j) += eps;
+            MAT_AT(g.w1, i, j) = ( cost(m, ti, to) - c ) / eps;
+            MAT_AT(m.w1, i, j) = saved;
+        }
+    }
+    // altering bias matrix of first layer.
+    for (size_t i=0; i<m.b1.rows; i++) {
+        for (size_t j=0; j<m.b1.cols; j++) {
+            saved = MAT_AT(m.b1, i, j);
+            MAT_AT(m.b1, i, j) += eps;
+            MAT_AT(g.b1, i, j) = ( cost(m, ti, to) - c ) / eps;
+            MAT_AT(m.b1, i, j) = saved;
+        }
+    }
+
+    // altering the weights matrix of the second layer
+    for (size_t i=0; i<m.w2.rows; i++) {
+        for (size_t j=0; j<m.w2.cols; j++) {
+            saved = MAT_AT(m.w2, i, j);
+            MAT_AT(m.w2, i, j) += eps;
+            MAT_AT(g.w2, i, j) = ( cost(m, ti, to) - c ) / eps;
+            MAT_AT(m.w2, i, j) = saved;
+        }
+    }
+    // altering bias matrix of second layer.
+    for (size_t i=0; i<m.b2.rows; i++) {
+        for (size_t j=0; j<m.b2.cols; j++) {
+            saved = MAT_AT(m.b2, i, j);
+            MAT_AT(m.b2, i, j) += eps;
+            MAT_AT(g.b2, i, j) = ( cost(m, ti, to) - c ) / eps;
+            MAT_AT(m.b2, i, j) = saved;
+        }
+    }
+}
+
+void learn(Xor m, Xor g, float rate) {
+    // updating first layer weights with gradient Xor.
+    for (size_t i=0; i<m.w1.rows; i++) {
+        for (size_t j=0; j<m.w1.cols; j++) {
+            MAT_AT(m.w1, i, j) -= MAT_AT(g.w1, i, j)*rate;
+        }
+    }
+    // updating first layer bias with gradient Xor.
+    for (size_t i=0; i<m.b1.rows; i++) {
+        for (size_t j=0; j<m.b1.cols; j++) {
+            MAT_AT(m.b1, i, j) -= MAT_AT(g.b1, i, j)*rate;
+        }
+    }
+    // updating second layer weights with gradient Xor.
+    for (size_t i=0; i<m.w2.rows; i++) {
+        for (size_t j=0; j<m.w2.cols; j++) {
+            MAT_AT(m.w2, i, j) -= MAT_AT(g.w2, i, j)*rate;
+        }
+    }
+    // updating second layer bias with gradient Xor.
+    for (size_t i=0; i<m.b2.rows; i++) {
+        for (size_t j=0; j<m.b2.cols; j++) {
+            MAT_AT(m.b2, i, j) -= MAT_AT(g.b2, i, j)*rate;
+        }
+    }
+}
 
 // training data
 float td[] = {
@@ -86,16 +169,8 @@ int main(void) {
     MAT_PRINT(ti);
     MAT_PRINT(to);
 
-    return 0;
-
-    Xor m;
-    m.a0 = mat_alloc(1, 2);
-    m.w1 = mat_alloc(2, 2);
-    m.b1 = mat_alloc(1, 2); // bias matrix is 1x2;
-    m.a1 = mat_alloc(1, 2);
-    m.w2 = mat_alloc(2, 1);
-    m.b2 = mat_alloc(1, 1);
-    m.a2 = mat_alloc(1, 1);
+    Xor m = xor_alloc();
+    Xor g = xor_alloc();
 
     // we don't need to randomize the activation layers,
     // as they are results of computations.
@@ -104,6 +179,15 @@ int main(void) {
     mat_rand(m.w2, 0, 1);
     mat_rand(m.b2, 0, 1);
 
+    float eps = 1e-3;
+    float rate = 1e-3;
+
+    printf("cost = %f\n", cost(m, ti, to));
+    finite_diff(m, g, eps, ti, to);
+    learn(m, g, rate);
+    printf("cost = %f\n", cost(m, ti, to));
+
+    #if 0
     for (size_t i=0; i<2; i++) {
         for (size_t j=0; j<2; j++) {
             MAT_AT(m.a0, 0, 0) = i;
@@ -114,6 +198,7 @@ int main(void) {
             printf("%zu ^ %zu = %f\n", i, j, y);
         }
     }
+    #endif
 
     return 0;
 }
