@@ -4,20 +4,47 @@
 #include "nn.h"
 
 typedef struct {
-    Mat a0; // inputs
-    Mat w1, b1, a1; // 1st layer
-    Mat w2, b2, a2; // 2nd layer
-} Xor;
+    size_t count; // The number of inner layers
+    Mat *ws; // arbitrary collection of weight matrices
+    Mat *bs; // arbitrary collection of bias matrices
+    Mat *as; // collection of activations. it is count+1 because we 
+    // adding an extra layer for the inputs.
+} NN;
 
-Xor xor_alloc(void) {
-    Xor m;
-    m.a0 = mat_alloc(1, 2);
-    m.w1 = mat_alloc(2, 2);
-    m.b1 = mat_alloc(1, 2); // bias matrix is 1x2;
-    m.a1 = mat_alloc(1, 2);
-    m.w2 = mat_alloc(2, 1);
-    m.b2 = mat_alloc(1, 1);
-    m.a2 = mat_alloc(1, 1);
+#define ARRAY_LEN(xs) sizeof((xs)) / sizeof((xs)[0])
+
+// size_t arch[] = {2, 2, 1} // 2-inputs, 2-neurons hidden layer, and 1-output
+// NN nn = nn_alloc(arch, ARRAY_LEN(arch))
+
+NN nn_alloc(size_t *arch, size_t arch_count) {
+    NN m;
+    nn.count = arch_count - 1; // nn.count is the amount of hidden layers,
+    // but arch_count includes the input layer, so we subtract it by 1;
+    //
+    nn.ws = NN_MALLOC(sizeof(*nn.ws)*nn.count); //sizeof works at compile time
+    // the expression inside it is evaluated as compile time, not runtime.
+    // in our case *nn.ws refers to the element nn.ws is pointing to.
+    // So are are allocating many matrices with sizeof(*nn.ws), since
+    // nn.ws points to an object of type matrix.
+    // non-VLA types (Variable Length Array) are arrays whose size we know at
+    // compile time.
+    NN_ASSERT(nn.ws != NULL);
+    nn.bs = NN_ALLOC(sizeof(*nn.bs)*nn.count);
+    NN_ASSERT(nn.bs != NULL);
+    nn.as = NN_ALLOC(sizeof(*nn.as)*(nn.count + 1));
+    NN_ASSERT(nn.as != NULL);
+
+    // The input layer is just a 1-row vector, [x1, x2]
+    // But whose number of columns is given by `arch[0]`.
+    nn.as[0] = mat_alloc(1, arch[0]);
+    for (size_t i=1; i < arch_count; i++) {
+        // The number of rows for the current weight matrix
+        // should be equal to the number of columns of the previous activation matrix
+        nn.ws[i-1] = mat_alloc(nn.as[i-1].cols, arch[i]);
+        // The bias is a vector of 1-row, and its number of columns is the same as arch[1]
+        // .ie the number of neurons in the hidden layer.
+        nn.bs[i-1] = mat_alloc(1, arch[i]);
+    }
     return m;
 }
 
