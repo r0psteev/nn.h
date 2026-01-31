@@ -179,15 +179,17 @@ int main(void) {
     mat_rand(m.w2, 0, 1);
     mat_rand(m.b2, 0, 1);
 
-    float eps = 1e-3;
-    float rate = 1e-3;
+    float eps = 1e-1;
+    float rate = 1e-1;
 
     printf("cost = %f\n", cost(m, ti, to));
-    finite_diff(m, g, eps, ti, to);
-    learn(m, g, rate);
-    printf("cost = %f\n", cost(m, ti, to));
+    for (size_t i=0; i<10*1000; i++) {
+        finite_diff(m, g, eps, ti, to);
+        learn(m, g, rate);
+        printf("%zu: cost = %f\n", i, cost(m, ti, to));
+    }
 
-    #if 0
+    #if 1
     for (size_t i=0; i<2; i++) {
         for (size_t j=0; j<2; j++) {
             MAT_AT(m.a0, 0, 0) = i;
