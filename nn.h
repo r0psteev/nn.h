@@ -67,6 +67,7 @@ void mat_copy(Mat dst, Mat src);
 // a string.
 #define MAT_PRINT(m) mat_print(m, #m, 0);
 
+// Neural network api
 typedef struct {
     size_t count; // The number of inner layers
     Mat *ws; // arbitrary collection of weight matrices
@@ -78,6 +79,7 @@ typedef struct {
 NN nn_alloc(size_t *arch, size_t arch_count);
 void nn_print(NN nn, const char *name);
 #define NN_PRINT(nn) nn_print(nn, #nn);
+void nn_rand(NN nn, float low, float high);
 
 #endif // NN_H_
 
@@ -245,5 +247,13 @@ void nn_print(NN nn, const char *name) {
     }
     printf("]\n");
 }
+
+void nn_rand(NN nn, float low, float high) {
+    for(size_t i=0; i<nn.count; i++) {
+        mat_rand(nn.ws[i], low, high);
+        mat_rand(nn.bs[i], low, high);
+    }
+}
+
 #endif // NN_IMPLEMENTATION
 

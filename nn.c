@@ -146,13 +146,15 @@ float td[] = {
 
 int main(void) {
 
+    srand(time(NULL));
+
     size_t arch[] = {2, 5, 2, 1};
     NN nn = nn_alloc(arch, ARRAY_LEN(arch));
+    nn_rand(nn, 0, 1);
     NN_PRINT(nn);
 
     return 0;
     
-    srand(time(NULL));
     // Porting the XOR neuron
 
     size_t stride = 3;
