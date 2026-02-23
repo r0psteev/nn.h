@@ -211,7 +211,7 @@ NN nn_alloc(size_t *arch, size_t arch_count) {
     nn.ws = NN_MALLOC(sizeof(*nn.ws)*nn.count); //sizeof works at compile time
     // the expression inside it is evaluated as compile time, not runtime.
     // in our case *nn.ws refers to the element nn.ws is pointing to.
-    // So are are allocating many matrices with sizeof(*nn.ws), since
+    // So we are allocating many matrices with sizeof(*nn.ws), since
     // nn.ws points to an object of type matrix.
     // non-VLA types (Variable Length Array) are arrays whose size we know at
     // compile time.
@@ -227,10 +227,13 @@ NN nn_alloc(size_t *arch, size_t arch_count) {
     for (size_t i=1; i < arch_count; i++) {
         // The number of rows for the current weight matrix
         // should be equal to the number of columns of the previous activation matrix
+        // and the number of columns is given by the count of neurons present in that
+        // layer, because each column actually represents a neuron with its weights.
         nn.ws[i-1] = mat_alloc(nn.as[i-1].cols, arch[i]);
         // The bias is a vector of 1-row, and its number of columns is the same as arch[1]
         // .ie the number of neurons in the hidden layer.
         nn.bs[i-1] = mat_alloc(1, arch[i]);
+        // I think we started at `i=1` because nn.as[0] was set out of the loop.
         nn.as[i] = mat_alloc(1, arch[i]);
     }
     return nn;
