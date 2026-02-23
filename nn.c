@@ -148,7 +148,11 @@ int main(void) {
 
     srand(time(NULL));
 
-    size_t arch[] = {2, 5, 2, 1};
+    // 2-inputs
+    // 5 neurons in first layer
+    // 3 neurons in second layer
+    // 1 neuron in last layer.
+    size_t arch[] = {2, 5, 3, 1};
     NN nn = nn_alloc(arch, ARRAY_LEN(arch));
     nn_rand(nn, 0, 1);
     NN_PRINT(nn);
