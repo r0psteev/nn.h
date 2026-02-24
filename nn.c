@@ -21,6 +21,16 @@ Xor xor_alloc(void) {
     return m;
 }
 
+void nn_forward(NN nn) {
+    for (size_t i=0; i<nn.count; i++) {
+        // i+1 does give an overflow on nn.as
+        // because the size of nn.as during allocation is nn.count + 1
+        mat_dot(nn.as[i+1], nn.as[i], nn.ws[i]);
+        mat_sum(nn.as[i+1], nn.bs[i]);
+        mat_sig(nn.as[i+1]);
+    }
+}
+
 float forward_xor(Xor m) {
     mat_dot(m.a1, m.a0, m.w1); // multiplication
     mat_sum(m.a1, m.b1); // bias
@@ -148,30 +158,20 @@ int main(void) {
 
     srand(time(NULL));
 
-    // 2-inputs
-    // 5 neurons in first layer
-    // 3 neurons in second layer
-    // 1 neuron in last layer.
-    size_t arch[] = {2, 5, 3, 1};
-    NN nn = nn_alloc(arch, ARRAY_LEN(arch));
-    nn_rand(nn, 0, 1);
-    NN_PRINT(nn);
-
-    return 0;
     
     // Porting the XOR neuron
-
+    
     size_t stride = 3;
     size_t n = (sizeof(td) / sizeof(td[0])) / stride; // td / td[0] gives 12, because there are 3 elements on each row
     printf("n = %zu\n", n);
-
+    
     Mat ti = {
         .rows = n,
         .cols = 2,
         .stride = stride,
         .es = td,
     };
-
+    
     Mat to = {
         .rows = n,
         .cols = 1,
@@ -179,6 +179,18 @@ int main(void) {
         .es = td + 2,
     };
 
+    // 2-inputs
+    // 2 neurons in first layer
+    // 1 neuron in last layer.
+    size_t arch[] = {2, 2, 1};
+    NN nn = nn_alloc(arch, ARRAY_LEN(arch));
+    nn_rand(nn, 0, 1);
+
+    MAT_PRINT(mat_row(ti, 3));
+
+
+    return 0;
+    
     MAT_PRINT(ti);
     MAT_PRINT(to);
 

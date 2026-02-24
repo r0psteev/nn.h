@@ -76,10 +76,14 @@ typedef struct {
     // adding an extra layer for the inputs.
 } NN;
 
+#define NN_INPUT(nn) (nn).as[0]
+#define NN_OUTPUT(nn) (nn).as[(nn).count]
+
 NN nn_alloc(size_t *arch, size_t arch_count);
 void nn_print(NN nn, const char *name);
 #define NN_PRINT(nn) nn_print(nn, #nn);
 void nn_rand(NN nn, float low, float high);
+void nn_forward(NN nn);
 
 #endif // NN_H_
 
@@ -182,7 +186,7 @@ Mat mat_row(Mat m, size_t row) {
         .rows = 1,
         .cols = m.cols,
         .stride = m.stride,
-        // since MAT_AT is an expression that points to an element with es array,
+        // since MAT_AT is an expression that points to an element within es array,
         // using ampersand infront of it gives us a pointer from the element pointed,
         // in this case it is the first element in the row.
         // Thus a pointer to the first element in the row.
