@@ -186,7 +186,13 @@ int main(void) {
     NN nn = nn_alloc(arch, ARRAY_LEN(arch));
     nn_rand(nn, 0, 1);
 
-    MAT_PRINT(mat_row(ti, 3));
+    // copying the second line of the input matrix ti,
+    // into the inputs/a0 activations of the neural network.
+    Mat row = mat_row(ti, 2);
+    MAT_PRINT(row);
+    mat_copy(NN_INPUT(nn), row);
+    nn_forward(nn);
+    MAT_PRINT(NN_OUTPUT(nn));
 
 
     return 0;
