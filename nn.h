@@ -84,6 +84,8 @@ void nn_print(NN nn, const char *name);
 #define NN_PRINT(nn) nn_print(nn, #nn);
 void nn_rand(NN nn, float low, float high);
 void nn_forward(NN nn);
+float nn_cost(NN nn, Mat ti, Mat to);
+void nn_finite_diff(NN nn, NN g, float eps, Mat ti, Mat to);
 
 #endif // NN_H_
 
@@ -259,6 +261,55 @@ void nn_rand(NN nn, float low, float high) {
     for(size_t i=0; i<nn.count; i++) {
         mat_rand(nn.ws[i], low, high);
         mat_rand(nn.bs[i], low, high);
+    }
+}
+
+float nn_cost(NN nn, Mat ti, Mat to) {
+    NN_ASSERT(ti.rows == to.rows);
+    NN_ASSERT(to.cols == NN_OUTPUT(nn).cols);
+    size_t n = ti.rows;
+
+    float c = 0;
+    for(size_t i=0; i<n; i++) {
+        Mat x = mat_row(ti, i);
+        Mat y = mat_row(to, i);
+
+        mat_copy(NN_INPUT(nn), x);
+        nn_forward(nn);
+
+        size_t q = to.cols;
+        for (size_t j=0; j<q; j++){
+            float d = MAT_AT(NN_OUTPUT(nn), 0, j) - MAT_AT(y, 0, j);
+            c += (d*d);
+        }
+    }
+    return c/n;
+}
+
+void nn_finite_diff(NN nn, NN g, float eps, Mat ti, Mat to) {
+    float saved;
+
+    float c = nn_cost(nn, ti, to);
+    for (size_t k=0; k<nn.count; k++) {
+
+        // Alter weights of layer k.
+        for (size_t i=0; i<nn.ws[k].rows; i++) {
+            for (size_t j=0; j<nn.ws[k].cols; j++) {
+                saved = MAT_AT(nn.ws[k], i, j);
+                MAT_AT(nn.ws[k], i, j) += eps;
+                MAT_AT(g.ws[k], i, j) = ( nn_cost(nn, ti, to) - c ) / eps;
+                MAT_AT(nn.ws[k], i, j) = saved;
+            }
+        }
+        // Alter biases of layer k
+        for (size_t i=0; i<nn.bs[k].rows; i++) {
+            for (size_t j=0; j<nn.bs[k].cols; j++) {
+                saved = MAT_AT(nn.bs[k], i, j);
+                MAT_AT(nn.bs[k], i, j) += eps;
+                MAT_AT(g.bs[k], i, j) = ( nn_cost(nn, ti, to) - c ) / eps;
+                MAT_AT(nn.bs[k], i, j) = saved;
+            }
+        }
     }
 }
 

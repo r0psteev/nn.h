@@ -184,15 +184,22 @@ int main(void) {
     // 1 neuron in last layer.
     size_t arch[] = {2, 2, 1};
     NN nn = nn_alloc(arch, ARRAY_LEN(arch));
+    NN gg = nn_alloc(arch, ARRAY_LEN(arch));
     nn_rand(nn, 0, 1);
 
     // copying the second line of the input matrix ti,
     // into the inputs/a0 activations of the neural network.
-    Mat row = mat_row(ti, 2);
+    Mat row = mat_row(ti, 3);
     MAT_PRINT(row);
     mat_copy(NN_INPUT(nn), row);
     nn_forward(nn);
     MAT_PRINT(NN_OUTPUT(nn));
+    printf("cost: %f\n", nn_cost(nn, ti, to));
+    printf("NN gg before finite diff:\n");
+    NN_PRINT(gg);
+    nn_finite_diff(nn, gg, 1e-3, ti, to);
+    printf("NN gg after finite diff:\n");
+    NN_PRINT(gg);
 
 
     return 0;
