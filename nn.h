@@ -86,6 +86,7 @@ void nn_rand(NN nn, float low, float high);
 void nn_forward(NN nn);
 float nn_cost(NN nn, Mat ti, Mat to);
 void nn_finite_diff(NN nn, NN g, float eps, Mat ti, Mat to);
+void nn_learn(NN nn, NN g, float rate);
 
 #endif // NN_H_
 
@@ -308,6 +309,26 @@ void nn_finite_diff(NN nn, NN g, float eps, Mat ti, Mat to) {
                 MAT_AT(nn.bs[k], i, j) += eps;
                 MAT_AT(g.bs[k], i, j) = ( nn_cost(nn, ti, to) - c ) / eps;
                 MAT_AT(nn.bs[k], i, j) = saved;
+            }
+        }
+    }
+}
+
+void nn_learn(NN nn, NN g, float rate) {
+    // going through all layers of Neural network.
+    for (size_t k=0; k<nn.count; k++) {
+        // Alter weights of layer k
+
+        for (size_t i=0; i<nn.ws[k].rows; i++) {
+            for (size_t j=0; j<nn.ws[k].cols; j++) {
+                MAT_AT(nn.ws[k], i, j) -= MAT_AT(g.ws[k], i, j) * rate;
+            }
+        }
+
+        // Alter bias of layer k
+        for (size_t i=0; i<nn.bs[k].rows; i++) {
+            for (size_t j=0; j<nn.bs[k].cols; j++) {
+                MAT_AT(nn.bs[k], i, j) -= MAT_AT(g.bs[k], i, j) * rate;
             }
         }
     }
