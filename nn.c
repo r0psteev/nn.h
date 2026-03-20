@@ -15,22 +15,29 @@ void nn_forward(NN nn) {
 }
 
 // training data
-float td[] = {
+float td_xor[] = {
     0, 0, 0,
     0, 1, 1,
     1, 0, 1,
     1, 1, 0,
 };
 
+float td_or[] = {
+    0, 0, 0,
+    0, 1, 1,
+    1, 0, 1,
+    1, 1, 1,
+};
+
 int main(void) {
 
     srand(time(NULL));
-
+    float *td = td_or;
     
     // Porting the XOR neuron
     
     size_t stride = 3;
-    size_t n = (sizeof(td) / sizeof(td[0])) / stride; // td / td[0] gives 12, because there are 3 elements on each row
+    size_t n = 4;
     printf("n = %zu\n", n);
     
     Mat ti = {
@@ -50,7 +57,7 @@ int main(void) {
     // 2-inputs
     // 2 neurons in first layer
     // 1 neuron in last layer.
-    size_t arch[] = {2, 2, 1};
+    size_t arch[] = {2, 4, 1};
     NN nn = nn_alloc(arch, ARRAY_LEN(arch));
     NN gg = nn_alloc(arch, ARRAY_LEN(arch));
     nn_rand(nn, 0, 1);
@@ -73,6 +80,8 @@ int main(void) {
             printf("%zu ^ %zu = %f\n", i, j, MAT_AT(NN_OUTPUT(nn), 0, 0));
         }
     }
+
+    NN_PRINT(nn);
 
     return 0;
 }
