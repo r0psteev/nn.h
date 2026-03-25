@@ -32,7 +32,7 @@ float td_or[] = {
 int main(void) {
 
     srand(time(NULL));
-    float *td = td_or;
+    float *td = td_xor;
     
     // Porting the XOR neuron
     
