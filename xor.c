@@ -6,7 +6,7 @@
 
 void nn_forward(NN nn) {
     for (size_t i=0; i<nn.count; i++) {
-        // i+1 does give an overflow on nn.as
+        // i+1 doesn't give an overflow on nn.as
         // because the size of nn.as during allocation is nn.count + 1
         mat_dot(nn.as[i+1], nn.as[i], nn.ws[i]);
         mat_sum(nn.as[i+1], nn.bs[i]);

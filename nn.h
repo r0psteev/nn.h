@@ -216,7 +216,7 @@ NN nn_alloc(size_t *arch, size_t arch_count) {
     // but arch_count includes the input layer, so we subtract it by 1;
     //
     nn.ws = NN_MALLOC(sizeof(*nn.ws)*nn.count); //sizeof works at compile time
-    // the expression inside it is evaluated as compile time, not runtime.
+    // the expression inside it is evaluated at compile time, not runtime.
     // in our case *nn.ws refers to the element nn.ws is pointing to.
     // So we are allocating many matrices with sizeof(*nn.ws), since
     // nn.ws points to an object of type matrix.
