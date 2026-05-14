@@ -86,6 +86,9 @@ void nn_rand(NN nn, float low, float high);
 void nn_forward(NN nn);
 float nn_cost(NN nn, Mat ti, Mat to);
 void nn_finite_diff(NN nn, NN g, float eps, Mat ti, Mat to);
+// We don't provide an epsilon here since we aren't trying to compute finite difference.
+// we are computing a real gradient. (its the same principle for the tsoding-ml-in-c/gates.c)
+void nn_backprop(NN nn, NN g, Mat ti, Mat to);
 void nn_learn(NN nn, NN g, float rate);
 
 #endif // NN_H_
@@ -311,6 +314,32 @@ void nn_finite_diff(NN nn, NN g, float eps, Mat ti, Mat to) {
                 MAT_AT(nn.bs[k], i, j) = saved;
             }
         }
+    }
+}
+
+void nn_backprop(NN nn, NN g, Mat ti, Mat to) {
+    // each row of ti is the input (a sample).
+    // each row of to is the output.
+    NN_ASSERT(ti.rows == to.rows);
+    size_t n = ti.rows;
+    NN_ASSERT(NN_OUTPUT(nn).cols == to.cols);
+
+    // first for-loop over samples
+    for (size_t i=0; i<n; i++) {
+        Mat x = mat_row(ti, i);
+        Mat y = mat_row(to, i);
+
+        mat_copy(NN_INPUT(nn), x);
+        nn_forward(nn);
+
+        for (size_t j=0; j<to.cols; j++) {
+            // a_i - y_i = (difference) partial derivative of Cost function of l+1 imaginary layer
+            // a_i - e_i = (differences) partial derivatives of remaining internal layers.
+            // We store these differences in the activations `as` matrices of the `g` neural network.
+            // The output layer `NN_OUTPUT(nn)` has a single row, but might have multiple columns.
+            MAT_AT(NN_OUTPUT(g), 0, j) = MAT_AT(NN_OUTPUT(nn), 0, j) - MAT_AT(to, i, j);  
+        }
+        
     }
 }
 
