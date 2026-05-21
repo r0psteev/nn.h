@@ -67,16 +67,12 @@ int main(void) {
 
     printf("cost = %f\n", nn_cost(nn, ti, to));
     for (size_t i=0; i<20*1000; i++) {
-#if 0
-        float eps = 1e-1;
-        nn_finite_diff(nn, gg, eps, ti, to);
-#else
         nn_backprop(nn, gg, ti, to);
-#endif
-        //NN_PRINT(gg);
         nn_learn(nn, gg, rate);
         printf("%zu: cost = %f\n", i, nn_cost(nn, ti, to));
     }
+
+    NN_PRINT(nn);
 
     for (size_t i=0; i<2; i++) {
         for (size_t j=0; j<2; j++) {
@@ -87,7 +83,6 @@ int main(void) {
         }
     }
 
-    // NN_PRINT(nn);
 
     return 0;
 }
