@@ -80,6 +80,9 @@ typedef struct {
 #define NN_OUTPUT(nn) (nn).as[(nn).count]
 
 NN nn_alloc(size_t *arch, size_t arch_count);
+// zero out a neural network, specifically gradient neural network before performing
+// computations on it.
+void nn_zero(NN nn);
 void nn_print(NN nn, const char *name);
 #define NN_PRINT(nn) nn_print(nn, #nn);
 void nn_rand(NN nn, float low, float high);
@@ -210,9 +213,18 @@ void mat_copy(Mat dst, Mat src) {
     }
 }
 
+void nn_zero(NN nn) {
+    for (size_t l=0; l<nn.count; l++) {
+        // zero-out weights matrices
+        mat_fill(nn.ws[l], 0);
+        mat_fill(nn.bs[l], 0);
+        mat_fill(nn.as[l], 0);
+    }
+    mat_fill(nn.as[nn.count], 0);
+}
+
 // size_t arch[] = {2, 2, 1} // 2-inputs, 2-neurons hidden layer, and 1-output
 // NN nn = nn_alloc(arch, ARRAY_LEN(arch))
-
 NN nn_alloc(size_t *arch, size_t arch_count) {
     NN nn;
     nn.count = arch_count - 1; // nn.count is the amount of hidden layers,
@@ -324,13 +336,25 @@ void nn_backprop(NN nn, NN g, Mat ti, Mat to) {
     size_t n = ti.rows;
     NN_ASSERT(NN_OUTPUT(nn).cols == to.cols);
 
+    nn_zero(g);
+
+    // i- current sample
+    // l - current layer
+    // j - current activation
+    // k - previous activation
+
     // first for-loop over samples
     for (size_t i=0; i<n; i++) {
         Mat x = mat_row(ti, i);
-        Mat y = mat_row(to, i);
 
         mat_copy(NN_INPUT(nn), x);
         nn_forward(nn);
+
+        // fill it out with zeros in between loops of samples, because it carries a lot of intermediate das
+        // that is not important between the samples.
+        for (size_t j=0; j<= nn.count; j++) {
+            mat_fill(g.as[j], 0);
+        }
 
         for (size_t j=0; j<to.cols; j++) {
             // a_i - y_i = (difference) partial derivative of Cost function of l+1 imaginary layer
@@ -339,7 +363,41 @@ void nn_backprop(NN nn, NN g, Mat ti, Mat to) {
             // The output layer `NN_OUTPUT(nn)` has a single row, but might have multiple columns.
             MAT_AT(NN_OUTPUT(g), 0, j) = MAT_AT(NN_OUTPUT(nn), 0, j) - MAT_AT(to, i, j);  
         }
+
+        for (size_t l = nn.count; l > 0; --l) {
+            for (size_t j=0; j<nn.as[l].cols; ++j) {
+                float a = MAT_AT(nn.as[l], 0, j);
+                float da = MAT_AT(g.as[l], 0, j); // the difference, partial derivative of C wrt a_i
+                // partial derivative wrt to biases.
+                MAT_AT(g.bs[l-1], 0, j) += 2*da*a*(1 - a);
+                for (size_t k=0; k<nn.as[l-1].cols; ++k) {
+                    // j - weight matrix col
+                    // k - weight matrix row
+                    // pa - previous activation
+                    float pa = MAT_AT(nn.as[l-1], 0, k);
+                    float w = MAT_AT(nn.ws[l-1], k, j);
+                    // partial derivative wrt to weight.
+                    MAT_AT(g.ws[l-1], k, j) += 2*da*a*(1 - a)*pa;
+                    // partial derivative wrt to a_(l-1)
+                    MAT_AT(g.as[l-1], 0, k) += 2*da*a*(1 - a)*w;
+                }
+            }
+        }
         
+    }
+
+    // Divide dbs, dws, by n
+    for (size_t i=0; i<g.count; i++) {
+        for (size_t j=0; j<g.ws[i].rows; j++) {
+            for (size_t k=0; k<g.ws[i].cols; k++) {
+                MAT_AT(g.ws[i], j, k) /= n;
+            }
+        }
+        for (size_t j=0; j<g.bs[i].rows; j++) {
+            for (size_t k=0; k<g.bs[i].cols; k++) {
+                MAT_AT(g.bs[i], j, k) /= n;
+            }
+        }
     }
 }
 

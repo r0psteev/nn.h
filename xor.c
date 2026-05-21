@@ -31,7 +31,8 @@ float td_or[] = {
 
 int main(void) {
 
-    srand(time(NULL));
+    //srand(time(NULL));
+    srand(69);
     float *td = td_xor;
     
     // Porting the XOR neuron
@@ -62,12 +63,17 @@ int main(void) {
     NN gg = nn_alloc(arch, ARRAY_LEN(arch));
     nn_rand(nn, 0, 1);
 
-    float eps = 1e-1;
     float rate = 1e-1;
 
     printf("cost = %f\n", nn_cost(nn, ti, to));
     for (size_t i=0; i<20*1000; i++) {
+#if 0
+        float eps = 1e-1;
         nn_finite_diff(nn, gg, eps, ti, to);
+#else
+        nn_backprop(nn, gg, ti, to);
+#endif
+        //NN_PRINT(gg);
         nn_learn(nn, gg, rate);
         printf("%zu: cost = %f\n", i, nn_cost(nn, ti, to));
     }
@@ -81,7 +87,7 @@ int main(void) {
         }
     }
 
-    NN_PRINT(nn);
+    // NN_PRINT(nn);
 
     return 0;
 }
