@@ -280,6 +280,16 @@ void nn_rand(NN nn, float low, float high) {
     }
 }
 
+void nn_forward(NN nn) {
+    for (size_t i=0; i<nn.count; i++) {
+        // i+1 doesn't give an overflow on nn.as
+        // because the size of nn.as during allocation is nn.count + 1
+        mat_dot(nn.as[i+1], nn.as[i], nn.ws[i]);
+        mat_sum(nn.as[i+1], nn.bs[i]);
+        mat_sig(nn.as[i+1]);
+    }
+}
+
 float nn_cost(NN nn, Mat ti, Mat to) {
     NN_ASSERT(ti.rows == to.rows);
     NN_ASSERT(to.cols == NN_OUTPUT(nn).cols);
