@@ -2,7 +2,7 @@
 #define NN_IMPLEMENTATION
 #include "nn.h"
 
-#define BITS 2
+#define BITS 3
 
 int main(void) {
     // There (1<<BITS) numbers with 2-bits
@@ -11,27 +11,12 @@ int main(void) {
     size_t rows = (1<<BITS) * (1<<BITS);
     Mat ti = mat_alloc(rows, 2*BITS); // a row has 2 numbers, BITS + BITS
     for (size_t i=0; i<rows; i++) {
-        if (i >= 4 && i < 8) {
-            MAT_AT(ti, i, 1) = 1;
-        }else if (i >= 8 && i < 12) {
-            MAT_AT(ti, i, 0) = 1;
-        }else if (i >= 12 && i < 16) {
-            MAT_AT(ti, i, 0) = 1;
-            MAT_AT(ti, i, 1) = 1;
-        }
-
-        if (i % 4 == 0) {
-            MAT_AT(ti, i, 2) = 0;
-            MAT_AT(ti, i, 3) = 0;
-        }else if (i % 4 == 1) {
-            MAT_AT(ti, i, 2) = 0;
-            MAT_AT(ti, i, 3) = 1;
-        }else if (i % 4 == 2) {
-            MAT_AT(ti, i, 2) = 1;
-            MAT_AT(ti, i, 3) = 0;
-        }else if (i % 4 == 3) {
-            MAT_AT(ti, i, 2) = 1;
-            MAT_AT(ti, i, 3) = 1;
+        size_t n = i;
+        // use `int j`, if you use size_t it will cross the negative line
+        // fall into unknown territory
+        for (int j=((2*BITS) - 1); j>=0; j--) {
+            MAT_AT(ti, i, j) = n%2;
+            n /= 2;
         }
     }
     MAT_PRINT(ti);
