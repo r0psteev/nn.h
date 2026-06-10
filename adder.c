@@ -13,34 +13,26 @@ int main(void) {
     Mat to = mat_alloc(rows, BITS+1); // an additional bit for the overflow bit.
     for (size_t i=0; i<rows; i++) {
         size_t n = i;
+        size_t x = 0;
+        size_t y = 0;
+        size_t z = 0;
+        size_t overflow = 0;
         // use `int j`, if you use size_t it will cross the negative line
         // fall into unknown territory
         for (int j=((2*BITS) - 1); j>=0; j--) {
             MAT_AT(ti, i, j) = n%2;
             n /= 2;
-        }
-    }
 
-    // Isolated the numbers forming an input
-    for (size_t i=0; i<rows; i++) {
-        size_t x = 0;
-        size_t y = 0;
-        size_t z = 0;
-        size_t overflow = 0;
+            if (j >= BITS) {
+                // Isolate first number
+                x += (int)MAT_AT(ti, i, j) << (((2*BITS) - 1) - j);
+            }else if (j >= 0) {
+                // Isolate second number
+                y += (int)MAT_AT(ti, i, j) << (((BITS) - 1) - j);
+            }
 
-        // Isolate first number
-        for (int j=((2*BITS) - 1); j>=(2*BITS)/2; j--) {
-            x += (int)MAT_AT(ti, i, j) << (((2*BITS) - 1) - j);
         }
-        // Isolate second number
-        for (int j=(BITS-1); j>=0; j--) {
-            y += (int)MAT_AT(ti, i, j) << (((BITS) - 1) - j);
-        }
-
         z = x + y;
-        // printf("%zu + %zu = %zu\n", y, x, z);
-        // is the sum beyond the maxium number that can be represented in `BITS` bits
-        // i.e `(1 << BITS) - 1`
         overflow = z >= (1 << BITS); 
 
         // Put sum in matrix in binary form
