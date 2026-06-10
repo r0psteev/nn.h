@@ -46,6 +46,44 @@ int main(void) {
         }
         MAT_AT(to, i, BITS) = overflow;
     }
-    MAT_PRINT(ti);
-    MAT_PRINT(to);
+    //MAT_PRINT(ti);
+    //MAT_PRINT(to);
+
+    // We needed a hidden layer in this network to be able to learn without getting stuck.
+    // The number of neurons in the hidden layer (as a rule of thumb) is the next power of 2
+    // greater than the number of inputs.
+    size_t arch[] = {2*BITS, 8, BITS+1};
+    NN nn = nn_alloc(arch, ARRAY_LEN(arch));
+    NN g = nn_alloc(arch, ARRAY_LEN(arch));
+    nn_rand(nn, 0, 1);
+    NN_PRINT(nn);
+
+    float rate = 1;
+    printf("cost = %f\n", nn_cost(nn, ti, to));
+    for (size_t i=0; i<5000; i++) {
+        nn_backprop(nn, g, ti, to);
+        nn_learn(nn, g, rate);
+        printf("cost = %f\n", nn_cost(nn, ti, to));
+    }
+
+    // display output
+    for (size_t i=0; i<rows; i++) {
+        size_t n = i;
+
+        for (int j=((2*BITS) - 1); j>=0; j--) {
+            MAT_AT(NN_INPUT(nn), 0, j) = n%2;
+            n /= 2;
+        }
+        for (size_t k=0; k<NN_INPUT(nn).cols; k++) {
+            int bits = MAT_AT(NN_INPUT(nn), 0, k) >= 0.5;
+            printf("%2d", bits);
+        }
+        printf(" = ");
+        nn_forward(nn);
+        for (size_t k=0; k<NN_OUTPUT(nn).cols; k++) {
+            int bits = MAT_AT(NN_OUTPUT(nn), 0, k) >= 0.5;
+            printf("%2d", bits);
+        }
+        printf("\n");
+    }
 }
