@@ -62,7 +62,11 @@ int main(void) {
     printf("cost = %f\n", nn_cost(nn, ti, to));
     // 5000 iterations is not enough for correctness when adder numbers are represented with 3-BITS.
     for (size_t i=0; i<10*1000; i++) {
+#if 1
         nn_backprop(nn, g, ti, to);
+#else
+        nn_finite_diff(nn, g, 1e-1, ti, to);
+#endif
         nn_learn(nn, g, rate);
         printf("cost = %f\n", nn_cost(nn, ti, to));
     }
