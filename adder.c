@@ -2,7 +2,7 @@
 #define NN_IMPLEMENTATION
 #include "nn.h"
 
-#define BITS 3 
+#define BITS 4 
 
 int main(void) {
     // There (1<<BITS) numbers with 2-bits
@@ -52,7 +52,7 @@ int main(void) {
     // We needed a hidden layer in this network to be able to learn without getting stuck.
     // The number of neurons in the hidden layer (as a rule of thumb) is the next power of 2
     // greater than the number of inputs.
-    size_t arch[] = {2*BITS, 8, BITS+1};
+    size_t arch[] = {2*BITS, 16, BITS+1};
     NN nn = nn_alloc(arch, ARRAY_LEN(arch));
     NN g = nn_alloc(arch, ARRAY_LEN(arch));
     nn_rand(nn, 0, 1);
@@ -61,8 +61,8 @@ int main(void) {
     float rate = 1;
     printf("cost = %f\n", nn_cost(nn, ti, to));
     // 5000 iterations is not enough for correctness when adder numbers are represented with 3-BITS.
-    for (size_t i=0; i<10*1000; i++) {
-#if 1
+    for (size_t i=0; i<20*1000; i++) {
+#if 0
         nn_backprop(nn, g, ti, to);
 #else
         nn_finite_diff(nn, g, 1e-1, ti, to);
