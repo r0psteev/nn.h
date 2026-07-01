@@ -16,8 +16,33 @@ int main(void) {
     nn_rand(nn, 0, 1);
     NN_PRINT(nn);
 
+    uint32_t neuron_color = 0xFF0000FF;
+    uint32_t background_color = 0xFF181818;
     Olivec_Canvas img = olivec_canvas(img_pixels, IMG_WIDTH, IMG_HEIGHT, IMG_WIDTH);
-    olivec_fill(img, 0xFF0000FF);
+    olivec_fill(img, background_color);
+
+    // Draw the input layer
+
+    size_t layer_count = arch[0];
+    int neuron_radius = 25;
+    int layer_border_pad = 50; // space of nn layer from borders of image in pixels
+    int layer_height = img.height - 2*layer_border_pad;
+    int layer_vpad = layer_height/layer_count;
+    int layer_x = img.width/2;
+    int layer_y = img.height/2 - layer_height/2;
+    for (size_t i=0; i < arch[0]; ++i) {
+        int cx = layer_x;
+        int cy = layer_y + i*layer_vpad + layer_vpad/2;
+        olivec_circle(img, cx, cy, neuron_radius, neuron_color);
+    }
+
+    // Draw a frame around the canvas
+    uint32_t frame_thicc = 10;
+    uint32_t frame_color = 0xFFAAAAAA;
+    // we draw the frame up to img.width-1 because img.width is the number of pixels,
+    // but pixel index goes from 0 to img.width-1 (same logic applies to img.height)
+    olivec_frame(img, 0, 0, img.width-1, img.height-1, frame_thicc, frame_color);
+
 
     const char *img_file_path = "nn.png";
     // comp is the amount of components
