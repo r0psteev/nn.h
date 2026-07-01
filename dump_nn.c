@@ -12,7 +12,8 @@ uint32_t img_pixels[IMG_WIDTH*IMG_HEIGHT];
 
 int main(void) {
     size_t arch[] = {2, 2, 1}; // XOR
-    NN nn = nn_alloc(arch, ARRAY_LEN(arch));
+    size_t arch_count = ARRAY_LEN(arch);
+    NN nn = nn_alloc(arch, arch_count);
     nn_rand(nn, 0, 1);
     NN_PRINT(nn);
 
@@ -21,20 +22,25 @@ int main(void) {
     Olivec_Canvas img = olivec_canvas(img_pixels, IMG_WIDTH, IMG_HEIGHT, IMG_WIDTH);
     olivec_fill(img, background_color);
 
-    // Draw the input layer
-
-    size_t layer_count = arch[0];
+    // Draw all layers
     int neuron_radius = 25;
-    int layer_border_pad = 50; // space of nn layer from borders of image in pixels
-    int layer_height = img.height - 2*layer_border_pad;
-    int layer_vpad = layer_height/layer_count;
-    int layer_x = img.width/2;
-    int layer_y = img.height/2 - layer_height/2;
-    for (size_t i=0; i < arch[0]; ++i) {
-        int cx = layer_x;
-        int cy = layer_y + i*layer_vpad + layer_vpad/2;
-        olivec_circle(img, cx, cy, neuron_radius, neuron_color);
+    int layer_border_vpad = 50; // account for border from top and bottom
+    int layer_border_hpad = 50; // account for border left and right
+    int nn_width = img.width - 2*layer_border_hpad;
+    int layer_hpad = nn_width / arch_count;
+    for (size_t j=0; j<arch_count; j++) {
+        size_t layer_count = arch[j];
+        int nn_height = img.height - 2*layer_border_vpad;
+        int layer_vpad = nn_height/layer_count;
+        int layer_x = img.width/2 - nn_width/2 + layer_hpad*j + layer_hpad/2;
+        int layer_y = img.height/2 - nn_height/2;
+        for (size_t i=0; i < arch[0]; ++i) {
+            int cx = layer_x;
+            int cy = layer_y + i*layer_vpad + layer_vpad/2;
+            olivec_circle(img, cx, cy, neuron_radius, neuron_color);
+        }
     }
+
 
     // Draw a frame around the canvas
     uint32_t frame_thicc = 10;
