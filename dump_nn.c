@@ -32,10 +32,10 @@ int main(void) {
         size_t layer_count = arch[j];
         int nn_height = img.height - 2*layer_border_vpad;
         int layer_vpad = nn_height/layer_count;
-        int layer_x = img.width/2 - nn_width/2 + layer_hpad*j + layer_hpad/2;
+        int layer_x = img.width/2 - nn_width/2 ;
         int layer_y = img.height/2 - nn_height/2;
-        for (size_t i=0; i < arch[0]; ++i) {
-            int cx = layer_x;
+        for (size_t i=0; i < layer_count; ++i) {
+            int cx = layer_x + j*layer_hpad + layer_hpad/2;
             int cy = layer_y + i*layer_vpad + layer_vpad/2;
             olivec_circle(img, cx, cy, neuron_radius, neuron_color);
         }
