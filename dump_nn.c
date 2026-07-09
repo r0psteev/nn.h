@@ -11,13 +11,14 @@
 uint32_t img_pixels[IMG_WIDTH*IMG_HEIGHT];
 
 int main(void) {
-    size_t arch[] = {2, 2, 1}; // XOR
+    size_t arch[] = {4, 5, 2, 1}; // XOR
     size_t arch_count = ARRAY_LEN(arch);
     NN nn = nn_alloc(arch, arch_count);
     nn_rand(nn, 0, 1);
     NN_PRINT(nn);
 
     uint32_t neuron_color = 0xFF0000FF;
+    uint32_t connection_color = 0xFF00FF00;
     uint32_t background_color = 0xFF181818;
     Olivec_Canvas img = olivec_canvas(img_pixels, IMG_WIDTH, IMG_HEIGHT, IMG_WIDTH);
     olivec_fill(img, background_color);
@@ -27,17 +28,27 @@ int main(void) {
     int layer_border_vpad = 50; // account for border from top and bottom
     int layer_border_hpad = 50; // account for border left and right
     int nn_width = img.width - 2*layer_border_hpad;
-    int layer_hpad = nn_width / arch_count;
-    for (size_t j=0; j<arch_count; j++) {
-        size_t layer_count = arch[j];
-        int nn_height = img.height - 2*layer_border_vpad;
-        int layer_vpad = nn_height/layer_count;
-        int layer_x = img.width/2 - nn_width/2 ;
-        int layer_y = img.height/2 - nn_height/2;
-        for (size_t i=0; i < layer_count; ++i) {
-            int cx = layer_x + j*layer_hpad + layer_hpad/2;
-            int cy = layer_y + i*layer_vpad + layer_vpad/2;
-            olivec_circle(img, cx, cy, neuron_radius, neuron_color);
+    int nn_height = img.height - 2*layer_border_vpad;
+    int nn_x = img.width/2 - nn_width/2 ;
+    int nn_y = img.height/2 - nn_height/2;
+    int layer_hpad = nn_width / arch_count; // used to equally space layers horizontally.
+    for (size_t l=0; l<arch_count; l++) {
+        int layer_vpad1 = nn_height/arch[l]; // used to equally space neurons within a layer vertically.
+        for (size_t i=0; i < arch[l]; ++i) {
+            int cx1 = nn_x + l*layer_hpad + layer_hpad/2;
+            int cy1 = nn_y + i*layer_vpad1 + layer_vpad1/2;
+            olivec_circle(img, cx1, cy1, neuron_radius, neuron_color);
+
+            // As long as we are not the last layer, we iterate through the next layer
+            // and find the coordinates of its neurons, to connect with them
+            if (l+1 < arch_count) {
+                int layer_vpad2 = nn_height / arch[l+1];
+                for (size_t j=0; j < arch[l+1]; ++j) {
+                    int cx2 = nn_x + (l+1)*layer_hpad + layer_hpad/2;
+                    int cy2 = nn_y + j*layer_vpad2 + layer_vpad2/2;
+                    olivec_line(img, cx1, cy1, cx2, cy2, connection_color);
+                }
+            }
         }
     }
 
