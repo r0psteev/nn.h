@@ -37,7 +37,6 @@ int main(void) {
         for (size_t i=0; i < arch[l]; ++i) {
             int cx1 = nn_x + l*layer_hpad + layer_hpad/2;
             int cy1 = nn_y + i*layer_vpad1 + layer_vpad1/2;
-            olivec_circle(img, cx1, cy1, neuron_radius, neuron_color);
 
             // As long as we are not the last layer, we iterate through the next layer
             // and find the coordinates of its neurons, to connect with them
@@ -49,6 +48,8 @@ int main(void) {
                     olivec_line(img, cx1, cy1, cx2, cy2, connection_color);
                 }
             }
+            // Making sure to draw neurons on top (after) of connections.
+            olivec_circle(img, cx1, cy1, neuron_radius, neuron_color);
         }
     }
 
