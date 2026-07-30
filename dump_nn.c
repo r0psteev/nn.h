@@ -11,18 +11,13 @@
 
 uint32_t img_pixels[IMG_WIDTH*IMG_HEIGHT];
 
-int main(void) {
-    srand(time(0));
-    size_t arch[] = {4, 5, 2, 1}; // XOR
-    size_t arch_count = ARRAY_LEN(arch);
-    NN nn = nn_alloc(arch, arch_count);
-    nn_rand(nn, -10, 10);
-    NN_PRINT(nn);
+void nn_render(Olivec_Canvas img, NN nn)
+{
 
     uint32_t background_color = 0xFF181818;
     uint32_t low_color = 0x00FF00FF; // Red
     uint32_t high_color = 0x0000FF00; // Green
-    Olivec_Canvas img = olivec_canvas(img_pixels, IMG_WIDTH, IMG_HEIGHT, IMG_WIDTH);
+
     olivec_fill(img, background_color);
 
     // Draw all layers
@@ -33,18 +28,21 @@ int main(void) {
     int nn_height = img.height - 2*layer_border_vpad;
     int nn_x = img.width/2 - nn_width/2 ;
     int nn_y = img.height/2 - nn_height/2;
+    size_t arch_count = nn.count + 1;
     int layer_hpad = nn_width / arch_count; // used to equally space layers horizontally.
     for (size_t l=0; l<arch_count; l++) {
-        int layer_vpad1 = nn_height/arch[l]; // used to equally space neurons within a layer vertically.
-        for (size_t i=0; i < arch[l]; ++i) {
+        // Each column in an `nn.as[i]` matrix represents a neuron
+        // because we have a single activation per neuron in a row-vector
+        int layer_vpad1 = nn_height/nn.as[l].cols; // used to equally space neurons within a layer vertically.
+        for (size_t i=0; i < nn.as[l].cols; ++i) {
             int cx1 = nn_x + l*layer_hpad + layer_hpad/2;
             int cy1 = nn_y + i*layer_vpad1 + layer_vpad1/2;
 
             // As long as we are not the last layer, we iterate through the next layer
             // and find the coordinates of its neurons, to connect with them
             if (l+1 < arch_count) {
-                int layer_vpad2 = nn_height / arch[l+1];
-                for (size_t j=0; j < arch[l+1]; ++j) {
+                int layer_vpad2 = nn_height / nn.as[l+1].cols;
+                for (size_t j=0; j < nn.as[l+1].cols; ++j) {
                     int cx2 = nn_x + (l+1)*layer_hpad + layer_hpad/2;
                     int cy2 = nn_y + j*layer_vpad2 + layer_vpad2/2;
                     uint32_t s = floorf(255.f*sigmoidf(MAT_AT(nn.ws[l], j, i)));
@@ -68,6 +66,18 @@ int main(void) {
         }
     }
 
+}
+
+int main(void) {
+    srand(time(0));
+    size_t arch[] = {4, 5, 2, 1}; // XOR
+    size_t arch_count = ARRAY_LEN(arch);
+    NN nn = nn_alloc(arch, arch_count);
+    nn_rand(nn, -10, 10);
+    NN_PRINT(nn);
+
+    Olivec_Canvas img = olivec_canvas(img_pixels, IMG_WIDTH, IMG_HEIGHT, IMG_WIDTH);
+    nn_render(img, nn);
 
     // Draw a frame around the canvas
     uint32_t frame_thicc = 10;
