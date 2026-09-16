@@ -4,8 +4,8 @@
 
 #define OLIVEC_IMPLEMENTATION
 #include "olive.c"
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
+
+#include "raylib.h"
 
 #define BITS 4 
 
@@ -72,6 +72,62 @@ void nn_render(Olivec_Canvas img, NN nn)
 
 }
 
+
+void nn_render_raylib(NN nn)
+{
+
+    // Olivec uint32_t 0xFF181818 is in the order alpha-rgb
+    // while raylib is in order rgba.
+    Color background_color = {0x18, 0x18, 0x18, 0xFF};
+    // We decided to change alpha here because raylib might have a better way of blending colors
+    Color low_color = {0xFF, 0x00, 0xFF, 0xFF};
+    Color high_color = {0x00, 0xFF, 0x00, 0xFF};
+
+    ClearBackground(background_color);
+
+    // Draw all layers
+    int neuron_radius = 25;
+    int layer_border_vpad = 50; // account for border from top and bottom
+    int layer_border_hpad = 50; // account for border left and right
+    int nn_width = IMG_WIDTH - 2*layer_border_hpad;
+    int nn_height = IMG_HEIGHT - 2*layer_border_vpad;
+    int nn_x = IMG_WIDTH/2 - nn_width/2 ;
+    int nn_y = IMG_HEIGHT/2 - nn_height/2;
+    size_t arch_count = nn.count + 1;
+    int layer_hpad = nn_width / arch_count; // used to equally space layers horizontally.
+    for (size_t l=0; l<arch_count; l++) {
+        // Each column in an `nn.as[i]` matrix represents a neuron
+        // because we have a single activation per neuron in a row-vector
+        int layer_vpad1 = nn_height/nn.as[l].cols; // used to equally space neurons within a layer vertically.
+        for (size_t i=0; i < nn.as[l].cols; ++i) {
+            int cx1 = nn_x + l*layer_hpad + layer_hpad/2;
+            int cy1 = nn_y + i*layer_vpad1 + layer_vpad1/2;
+
+            // As long as we are not the last layer, we iterate through the next layer
+            // and find the coordinates of its neurons, to connect with them
+            if (l+1 < arch_count) {
+                int layer_vpad2 = nn_height / nn.as[l+1].cols;
+                for (size_t j=0; j < nn.as[l+1].cols; ++j) {
+                    int cx2 = nn_x + (l+1)*layer_hpad + layer_hpad/2;
+                    int cy2 = nn_y + j*layer_vpad2 + layer_vpad2/2;
+                    high_color.a = floorf(255.f*sigmoidf(MAT_AT(nn.ws[l], j, i)));
+                    DrawLine(cx1, cy1, cx2, cy2, ColorAlphaBlend(low_color, high_color, WHITE));
+                }
+            }
+            if (l > 0) {
+                // intensity of bias squished between 0 and 1 and the multiplied to 255
+                // this will be used used to define the intensity of green color we want to use.
+                high_color.a = floorf(255.f*sigmoidf(MAT_AT(nn.bs[l-1], 0, i)));
+                DrawCircle(cx1, cy1, neuron_radius, ColorAlphaBlend(low_color, high_color, WHITE));
+            } else {
+                Color input_layer = {0xAA, 0xAA, 0xAA, 0xFF};
+                DrawCircle(cx1, cy1, neuron_radius, input_layer);
+            }
+        }
+    }
+
+}
+
 int main(void) {
     // There (1<<BITS) numbers with 2-bits
     // The total number of possible combinations (additions) between these numbers is
@@ -127,28 +183,24 @@ int main(void) {
     NN_PRINT(nn);
 
     float rate = 1;
-    printf("cost = %f\n", nn_cost(nn, ti, to));
-    // 5000 iterations is not enough for correctness when adder numbers are represented with 3-BITS.
-    for (size_t i=0; i<20*1000; i++) {
-#if 1
-        nn_backprop(nn, g, ti, to);
-#else
-        nn_finite_diff(nn, g, 1e-1, ti, to);
-#endif
-        nn_learn(nn, g, rate);
-        if (i%100 == 0) {
-            printf("cost = %f\n", nn_cost(nn, ti, to));
-            Olivec_Canvas img = olivec_canvas(img_pixels, IMG_WIDTH, IMG_HEIGHT, IMG_WIDTH);
-            nn_render(img, nn);
-            char img_file_path[256];
-            snprintf(img_file_path, sizeof(img_file_path), "out/adder-%05zu.png", i);
-            if (!stbi_write_png(img_file_path, img.width, img.height, 4, img.pixels, img.stride*sizeof(uint32_t))) {
-                printf("ERROR: could not save file %s\n", img_file_path);
-                return 1;
-            }
 
-            printf("Saved NN to %s\n", img_file_path);
+    InitWindow(IMG_WIDTH, IMG_HEIGHT, "adder");
+    SetTargetFPS(60);
+
+    int i = 0;
+    while (!WindowShouldClose()) {
+        if (i < 20*1000) {
+            nn_backprop(nn, g, ti, to);
+            nn_learn(nn, g, rate);
         }
+        i+=1;
+
+        BeginDrawing();
+        {
+            ClearBackground(RAYWHITE);
+            nn_render_raylib(nn);
+        }
+        EndDrawing();
     }
 
     // count the number of failures and display output
