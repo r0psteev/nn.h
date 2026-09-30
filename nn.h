@@ -117,7 +117,7 @@ Mat mat_alloc(size_t rows, size_t cols) {
     // which is float in this  case.
     // but in case we change es to double type, it will automatically
     // become double here too.
-    m.es = NN_MALLOC(sizeof(*m.es)*rows*cols);
+    m.es = (float*) NN_MALLOC(sizeof(*m.es)*rows*cols);
     NN_ASSERT(m.es != NULL);
     return m;
 }
@@ -230,7 +230,7 @@ NN nn_alloc(size_t *arch, size_t arch_count) {
     nn.count = arch_count - 1; // nn.count is the amount of hidden layers,
     // but arch_count includes the input layer, so we subtract it by 1;
     //
-    nn.ws = NN_MALLOC(sizeof(*nn.ws)*nn.count); //sizeof works at compile time
+    nn.ws = (Mat*) NN_MALLOC(sizeof(*nn.ws)*nn.count); //sizeof works at compile time
     // the expression inside it is evaluated at compile time, not runtime.
     // in our case *nn.ws refers to the element nn.ws is pointing to.
     // So we are allocating many matrices with sizeof(*nn.ws), since
@@ -238,9 +238,9 @@ NN nn_alloc(size_t *arch, size_t arch_count) {
     // non-VLA types (Variable Length Array) are arrays whose size we know at
     // compile time.
     NN_ASSERT(nn.ws != NULL);
-    nn.bs = NN_MALLOC(sizeof(*nn.bs)*nn.count);
+    nn.bs = (Mat*) NN_MALLOC(sizeof(*nn.bs)*nn.count);
     NN_ASSERT(nn.bs != NULL);
-    nn.as = NN_MALLOC(sizeof(*nn.as)*(nn.count + 1));
+    nn.as = (Mat*) NN_MALLOC(sizeof(*nn.as)*(nn.count + 1));
     NN_ASSERT(nn.as != NULL);
 
     // The input layer is just a 1-row vector, [x1, x2]
