@@ -56,8 +56,10 @@ void nn_render_imgui(NN nn)
                 for (size_t j=0; j < nn.as[l+1].cols; ++j) {
                     int cx2 = nn_x + (l+1)*layer_hpad + layer_hpad/2;
                     int cy2 = nn_y + j*layer_vpad2 + layer_vpad2/2;
-                    high_color.w = floorf(255.f*sigmoidf(MAT_AT(nn.ws[l], j, i)));
-                    ImVec4 blendedVec = ImLerp(low_color, high_color, 1.0f);
+                    high_color.w = floorf(255.f*sigmoidf(MAT_AT(nn.ws[l], j, i))) / 255.f;
+                    printf("high_color.w: %f\n", high_color.w);
+                    // blend_alpha: [0: full magenta, 1: full green]
+                    ImVec4 blendedVec = ImLerp(low_color, high_color, high_color.w);
                     ImU32 blendedColor = ImGui::ColorConvertFloat4ToU32(blendedVec);
                     draw_list->AddLine(ImVec2(cx1, cy1), ImVec2(cx2, cy2), blendedColor, 1.0f);
                 }
@@ -65,8 +67,9 @@ void nn_render_imgui(NN nn)
             if (l > 0) {
                 // intensity of bias squished between 0 and 1 and the multiplied to 255
                 // this will be used used to define the intensity of green color we want to use.
-                high_color.w = floorf(255.f*sigmoidf(MAT_AT(nn.bs[l-1], 0, i)));
-                ImVec4 blendedVec = ImLerp(low_color, high_color, 1.0f);
+                high_color.w = floorf(255.f*sigmoidf(MAT_AT(nn.bs[l-1], 0, i))) / 255.f;
+                printf("high_color.w: %f\n", high_color.w);
+                ImVec4 blendedVec = ImLerp(low_color, high_color, high_color.w);
                 ImU32 blendedColor = ImGui::ColorConvertFloat4ToU32(blendedVec);
                 draw_list->AddCircleFilled(ImVec2(cx1, cy1), neuron_radius, blendedColor);
             } else {
