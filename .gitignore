@@ -4,3 +4,5 @@ adder
 dump_nn
 *.png
 nn.png
+adder_imgui
+imgui.ini
