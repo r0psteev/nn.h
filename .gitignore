@@ -2,7 +2,7 @@ nn
 xor
 adder
 dump_nn
-*.png
 nn.png
 imgui.ini
 adder_imgui
+out
